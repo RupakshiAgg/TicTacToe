@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
             std::cin >> position;
             std::cout << std::endl;
         } while (!game_start.AddOToGrid(position));
-        if (game_start.is_player_winner("O"))
+        if (game_start.is_winning_position("O", position))
         {
             game_start.PrintGrid();
             break;
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
             std::cout << std::endl;
         } while (!game_start.AddXToGrid(position) && turns < dem * dem);
         // if (game_start.)
-        if (game_start.is_player_winner("X"))
+        if (game_start.is_winning_position("X", position))
         {
             game_start.PrintGrid();
             break;

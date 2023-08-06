@@ -47,11 +47,8 @@ bool TikTac::TikTacToeGrid::AddXToGrid(int pos)
   return true;
 }
 
-// Currently this function iterates the entire position map and try to find match for a given player.
-// TODO: Optamize it based on the current user input by only checking the possible matches, instead of all.
-bool TikTac::TikTacToeGrid::is_player_winner(std::string player)
+bool TikTac::TikTacToeGrid::check_rt_diagonal(std::string player)
 {
-  // we will do a different search for cols, rows and diagonals
   int i = 0;
   int count = 0;
   auto value = position.find(i);
@@ -66,16 +63,20 @@ bool TikTac::TikTacToeGrid::is_player_winner(std::string player)
     count++;
     if (count == grid_dimention)
     {
-      std::cout << "WINNER!! Player '" << player << "' matched the right diagonal and WON THIS ROUND.\n";
       return true;
     }
     i = i + grid_dimention + 1;
     value = position.find(i);
   }
 
-  // Find consecutive match in left diagonal
+  return false;
+}
+bool TikTac::TikTacToeGrid::check_lt_diagonal(std::string player)
+{
+  int i = 0;
+  int count = 0;
   int j = grid_dimention - 1;
-  value = position.find(j);
+  auto value = position.find(j);
   count = 0;
   while (value != position.end())
   {
@@ -86,15 +87,19 @@ bool TikTac::TikTacToeGrid::is_player_winner(std::string player)
     count++;
     if (count == grid_dimention)
     {
-      std::cout << "WINNER!! Player '" << player << "' matched the lest diagonal and WON THIS ROUND.\n";
+
       return true;
     }
     j = j + grid_dimention - 1;
     value = position.find(j);
   }
+  return false;
+}
 
-  // Find consecutive match in rows
-  i = 0;
+bool TikTac::TikTacToeGrid::check_row(std::string player)
+{
+  int i = 0;
+  int count;
   while (i < grid_dimention * grid_dimention)
   {
     count = 0;
@@ -107,14 +112,18 @@ bool TikTac::TikTacToeGrid::is_player_winner(std::string player)
       count++;
       if (count == grid_dimention)
       {
-        std::cout << "WINNER!! Player '" << player << "' matched a row and WON THIS ROUND.\n";
         return true;
       }
     }
     i += 3;
   }
-  // Find consecutive match in Columns
-  for (i = 0, count = 0; i < grid_dimention; ++i)
+  return false;
+}
+
+bool TikTac::TikTacToeGrid::check_col(std::string player)
+{
+  int j;
+  for (int i = 0, count = 0; i < grid_dimention; ++i)
   {
     j = i;
     auto col_value = position.find(j);
@@ -127,14 +136,169 @@ bool TikTac::TikTacToeGrid::is_player_winner(std::string player)
       count++;
       if (count == grid_dimention)
       {
-        std::cout << "WINNER!! Player '" << player << "' matched a column and WON THIS ROUND.\n";
         return true;
       }
       j += grid_dimention;
       col_value = position.find(j);
     }
   }
+  return false;
+}
+
+// This function iterates the entire map and try to find match for a given player.
+bool TikTac::TikTacToeGrid::is_player_winner(std::string player)
+{
+  // we will do a different search for cols, rows and diagonals
+  int i = 0;
+  int count = 0;
+  auto value = position.find(i);
+
+  // Find consecutive match in right diagonal
+  if (check_rt_diagonal(player))
+  {
+    std::cout << "WINNER!! Player '" << player << "' matched the right diagonal and WON THIS ROUND.\n";
+    return true;
+  }
+
+  // Find consecutive match in left diagonal
+  if (check_lt_diagonal(player))
+  {
+    std::cout << "WINNER!! Player '" << player << "' matched the lest diagonal and WON THIS ROUND.\n";
+    return true;
+  }
+
+  // Find consecutive match in rows
+  if (check_row(player))
+  {
+    std::cout << "WINNER!! Player '" << player << "' matched a row and WON THIS ROUND.\n";
+    return true;
+  }
+  // Find consecutive match in Columns
+  if (check_col(player))
+  {
+    std::cout << "WINNER!! Player '" << player << "' matched a column and WON THIS ROUND.\n";
+    return true;
+  }
 
   // no match
+  return false;
+}
+
+// Iterates the map to find a match in either diagonal or column and row the the player's last move.
+bool TikTac::TikTacToeGrid::check_row(std::string player, int pos)
+{
+  // Match Latest position and Left of latest position
+  int lt_pos = pos;
+  bool lt_row_match = false;
+  int count = 0; // keeps track of number of consequtive matches
+  while (true)
+  {
+    auto get_value = position.find(lt_pos);
+    if (get_value == position.end())
+    {
+      break;
+    }
+    if (get_value->second == player)
+    {
+      count++;
+    }
+    if (lt_pos % grid_dimention == 0)
+    {
+      // First value of the row is the last element we need to check for left side
+      break;
+    }
+    lt_pos--;
+  }
+  // Match right of latest position
+  int rt_pos = pos + 1;
+  while (rt_pos % grid_dimention != 0)
+  {
+    auto get_value = position.find(rt_pos);
+    if (get_value == position.end())
+    {
+      break;
+    }
+    if (get_value->second == player)
+    {
+      count++;
+    }
+    rt_pos++;
+  }
+
+  if (count == grid_dimention)
+  {
+    return true;
+  }
+  return false;
+}
+
+bool TikTac::TikTacToeGrid::check_col(std::string player, int pos)
+{
+  int up_col = pos;
+  int count = 0;
+  while (up_col >= 0)
+  {
+    auto get_value = position.find(up_col);
+    if (get_value == position.end())
+    {
+      break;
+    }
+    if (get_value->second == player)
+    {
+      count++;
+    }
+    up_col -= grid_dimention;
+  }
+
+  int down_col = pos + grid_dimention;
+  while (down_col < grid_dimention * grid_dimention)
+  {
+    auto get_value = position.find(down_col);
+    if (get_value == position.end())
+    {
+      break;
+    }
+    if (get_value->second == player)
+    {
+      count++;
+    }
+    down_col += grid_dimention;
+  }
+  if (count == grid_dimention)
+  {
+    return true;
+  }
+  return false;
+}
+
+// TODO: Only search diagonals if the current entry can be in a diagonal.
+bool TikTac::TikTacToeGrid::is_winning_position(std::string player, int pos)
+{
+
+  // Always checks if there's a match in either diagonal
+  if (check_rt_diagonal(player))
+  {
+    std::cout << "WINNER!! Player '" << player << "' matched the right diagonal and WON THIS ROUND.\n";
+    return true;
+  }
+
+  if (check_lt_diagonal(player))
+  {
+    std::cout << "WINNER!! Player '" << player << "' matched the lest diagonal and WON THIS ROUND.\n";
+    return true;
+  }
+
+  // Do a different search for rows and column based on the player latest entry
+  if (check_row(player, pos))
+  {
+    std::cout << "WINNER!! Player '" << player << "' matched a row and WON THIS ROUND.\n";
+    return true;
+  }
+  // Match Col
+  if (check_col(player, pos))
+  {
+    std::cout << "WINNER!! Player '" << player << "' matched a column and WON THIS ROUND.\n";
+    return true;
+  }
   return false;
 }
